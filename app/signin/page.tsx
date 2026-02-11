@@ -22,30 +22,115 @@ export default function SignInPage() {
 
   const isFormValid = email.trim() && password.trim()
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
+ // Phần xử lý sau khi login thành công - EMAIL LOGIN
+const handleEmailSignIn = async (e: React.FormEvent) => {
+  e.preventDefault()
 
-    try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          email.includes("@")
-            ? { email: email, password: password }
-            : { userName: email, password: password }
-        ),
-      })
+  try {
+    const response = await fetch("http://localhost:8080/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(
+        email.includes("@")
+          ? { email: email, password: password }
+          : { userName: email, password: password }
+      ),
+    })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Login failed: ${errorText}`)
-      }
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Login failed: ${errorText}`)
+    }
 
-      const data = await response.json()
+    const data = await response.json()
+    
+    console.log("✅ Login response:", data)
+    console.log("📍 All keys in response:", Object.keys(data))
+    console.log("📍 data.userId:", data.userId)
+    console.log("📍 data.userID:", data.userID) // Java thường dùng userID thay vì userId
+    console.log("📍 data.id:", data.id)
+    console.log("📍 data.user_id:", data.user_id)
 
+    // ✅ Lấy userId từ response - THỬ TẤT CẢ VARIANTS
+    const userIdFromResponse = data.userId || data.userID || data.id || data.user_id
+    
+    console.log("🎯 Final userId extracted:", userIdFromResponse)
+    
+    // ✅ Tạo user object hoàn chỉnh
+    const user = {
+      userId: userIdFromResponse,
+      fullName: data.fullName,
+      email: data.email,
+      userName: data.username,
+      role: data.role,
+      token: data.token,
+    }
+
+    console.log("📦 User object to save:", user)
+
+    // ✅ Lưu TOÀN BỘ user object vào localStorage
+    localStorage.setItem("user", JSON.stringify(user))
+    
+    // ✅ Lưu userId riêng để dễ truy cập
+    if (userIdFromResponse) {
+      localStorage.setItem("userId", userIdFromResponse.toString())
+      console.log("✅ UserId saved to localStorage:", userIdFromResponse)
+    } else {
+      console.error("❌ No userId found in response!")
+    }
+
+    // Lưu các thông tin khác
+    localStorage.setItem("token", data.token)
+    localStorage.setItem("role", data.role)
+    localStorage.setItem("username", data.username)
+
+    // Gọi login từ auth hook
+    login(user)
+
+    // Redirect theo role
+    if (user.role === "DRIVER") router.push("/")
+    else if (user.role === "STAFF") router.push("/staff/inventory")
+    else if (user.role === "ADMIN") router.push("/admin/batteries")
+    else router.push("/")
+  } catch (error) {
+    console.error("Login error:", error)
+    alert("Invalid username or password")
+  }
+}
+
+// Phần xử lý sau khi login thành công - GOOGLE LOGIN
+const handleGoogleSignIn = useCallback(async (response: any) => {
+  console.log("🔐 Google Sign-In Response:", response)
+  setIsGoogleLoading(true)
+
+  try {
+    const googleToken = response.credential
+
+    console.log("📤 Sending token to backend...")
+    const res = await fetch("http://localhost:8080/api/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: googleToken }),
+    })
+
+    const data = await res.json()
+    console.log("📥 Backend response:", data)
+    console.log("📍 All keys in response:", Object.keys(data))
+    console.log("📍 data.userId:", data.userId)
+    console.log("📍 data.userID:", data.userID)
+    console.log("📍 data.id:", data.id)
+
+    if (res.ok) {
+      // ✅ Lấy userId từ response - THỬ TẤT CẢ VARIANTS
+      const userIdFromResponse = data.userId || data.userID || data.id || data.user_id
+      
+      console.log("🎯 Final userId extracted:", userIdFromResponse)
+      
+      // ✅ Tạo user object hoàn chỉnh
       const user = {
+        userId: userIdFromResponse,
         fullName: data.fullName,
         email: data.email,
         userName: data.username,
@@ -53,80 +138,49 @@ export default function SignInPage() {
         token: data.token,
       }
 
-      localStorage.setItem("token", data.token)
-      localStorage.setItem("role", data.role)
-      localStorage.setItem("username", data.username)
+      console.log("📦 User object to save:", user)
+
+      // ✅ Lưu TOÀN BỘ user object vào localStorage
+      localStorage.setItem("user", JSON.stringify(user))
+      
+      // ✅ Lưu userId riêng
+      if (userIdFromResponse) {
+        localStorage.setItem("userId", userIdFromResponse.toString())
+        console.log("✅ UserId saved to localStorage:", userIdFromResponse)
+      } else {
+        console.error("❌ No userId found in response!")
+      }
+
+      // Lưu token và thông tin khác
+      if (data.token) {
+        localStorage.setItem("token", data.token)
+        localStorage.setItem("role", data.role)
+        localStorage.setItem("username", data.username)
+        localStorage.setItem("authToken", data.token)
+        localStorage.setItem("userRole", data.role)
+        localStorage.setItem("userName", data.username)
+        localStorage.setItem("userEmail", data.email)
+      }
 
       login(user)
 
-      if (user.role === "DRIVER") router.push("/")
-      else if (user.role === "STAFF") router.push("/staff/queue")
-      else if (user.role === "ADMIN") router.push("/admin")
-      else router.push("/")
-    } catch (error) {
-      console.error("Login error:", error)
-      alert("Invalid username or password")
+      alert("🎉 Đăng nhập Google thành công!")
+      
+      // Redirect theo role
+      if (data.role === "DRIVER") router.push("/")
+      else if (data.role === "STAFF") router.push("/staff/queue")
+      else if (data.role === "ADMIN") router.push("/admin")
+      else window.location.href = "/"
+    } else {
+      alert("❌ Google login failed: " + (data.message || data || "Unknown error"))
     }
+  } catch (err) {
+    console.error("❌ Google login error:", err)
+    alert("❌ Error: " + err)
+  } finally {
+    setIsGoogleLoading(false)
   }
-
-  // Xử lý Google Sign-In
-  const handleGoogleSignIn = useCallback(async (response: any) => {
-    console.log("🔐 Google Sign-In Response:", response)
-    setIsGoogleLoading(true)
-
-    try {
-      const googleToken = response.credential
-
-      console.log("📤 Sending token to backend...")
-      const res = await fetch("http://localhost:8080/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: googleToken }),
-      })
-
-      const data = await res.json()
-      console.log("📥 Backend response:", data)
-
-      if (res.ok) {
-        // Lưu token giống như login thường
-        if (data.token) {
-          localStorage.setItem("token", data.token)
-          localStorage.setItem("role", data.role)
-          localStorage.setItem("username", data.username)
-          localStorage.setItem("authToken", data.token)
-          localStorage.setItem("userRole", data.role)
-          localStorage.setItem("userName", data.username)
-          localStorage.setItem("userEmail", data.email)
-        }
-
-        const user = {
-          fullName: data.fullName,
-          email: data.email,
-          userName: data.username,
-          role: data.role,
-          token: data.token,
-        }
-
-        login(user)
-
-        alert("🎉 Đăng nhập Google thành công!")
-        
-        // Redirect theo role
-        if (data.role === "DRIVER") router.push("/")
-        else if (data.role === "STAFF") router.push("/staff/queue")
-        else if (data.role === "ADMIN") router.push("/admin")
-        else window.location.href = "/"
-      } else {
-        alert("❌ Google login failed: " + (data.message || data || "Unknown error"))
-      }
-    } catch (err) {
-      console.error("❌ Google login error:", err)
-      alert("❌ Error: " + err)
-    } finally {
-      setIsGoogleLoading(false)
-    }
-  }, [login, router])
-
+}, [login, router])
   // Load Google Script
   useEffect(() => {
     if (window.google?.accounts?.id) {

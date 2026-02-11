@@ -3,39 +3,57 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import { LogOut, Battery, RefreshCw, ClipboardCheck, BarChart3, Menu } from "lucide-react"
+import { LogOut, LayoutDashboard, Plug, Battery, Users, Package, BarChart3, Menu, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 
-export function StaffSidebar() {
+export function AdminSidebar() {
   const pathname = usePathname()
   const { logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const menuItems = [
     {
-      label: "Battery Inventory",
-      href: "/staff/inventory",
+      label: "Dashboard",
+      href: "/admin",
+      icon: LayoutDashboard,
+    },
+    {
+      label: "Station Management",
+      href: "/admin/stations",
+      icon: Plug,
+    },
+    {
+      label: "Battery Management",
+      href: "/admin/batteries",
       icon: Battery,
     },
     {
-      label: "Transactions",
-      href: "/staff/transactions",
-      icon: RefreshCw,
+      label: "User Management",
+      href: "/admin/users",
+      icon: Users,
     },
     {
-      label: "Battery Check",
-      href: "/staff/battery-check",
-      icon: ClipboardCheck,
+      label: "Plan Management",
+      href: "/admin/plans",
+      icon: Package,
     },
     {
-      label: "Reports",
-      href: "/staff/reports",
+      label: "Reports & Analytics",
+      href: "/admin/reports",
       icon: BarChart3,
+    },
+    {
+      label: "User Reports",
+      href: "/admin/user-reports",
+      icon: MessageSquare,
     },
   ]
 
   const isActive = (href: string) => {
+    if (href === "/admin") {
+      return pathname === "/admin"
+    }
     return pathname.startsWith(href)
   }
 
@@ -51,8 +69,8 @@ export function StaffSidebar() {
       {/* Header */}
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {sidebarOpen && (
-          <Link href="/staff/inventory" className="flex items-center gap-2">
-            <h1 className="font-bold text-lg text-[#7241CE]">EVSwap Staff</h1>
+          <Link href="/admin" className="flex items-center gap-2">
+            <h1 className="font-bold text-lg text-[#7241CE]">EVSwap Admin</h1>
           </Link>
         )}
 
@@ -66,7 +84,7 @@ export function StaffSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-3">
+      <nav className="flex-1 px-3 py-6 space-y-3 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)

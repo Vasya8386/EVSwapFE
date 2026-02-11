@@ -23,8 +23,8 @@ export function HeroSection() {
       console.log("[v0] User role (lowercase):", userRole)
 
       if (userRole === "staff") {
-        console.log("[v0] Redirecting staff user to queue page")
-        router.push("/staff/queue")
+        console.log("[v0] Redirecting staff user to inventory page")
+        router.push("/staff/inventory")
       } else {
         console.log("[v0] Redirecting regular user to find-stations page")
         router.push("/booking/find-stations")

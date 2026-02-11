@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Menu, Home, Car, History, Zap, MessageSquare, AlertCircle, MapPin } from "lucide-react"
+import { Menu, Home, Car, History, Zap, AlertCircle, MapPin, Package } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 
 export function BookingSidebar() {
@@ -43,6 +43,14 @@ export function BookingSidebar() {
         />
 
         <NavItem
+          icon={<Package className="w-5 h-5" />}
+          label="Packages"
+          active={isActive("/booking/packages")}
+          sidebarOpen={sidebarOpen}
+          onClick={() => router.push("/booking/packages")}
+        />
+
+        <NavItem
           icon={<Zap className="w-5 h-5" />}
           label="Swap"
           active={isActive("/booking/swap")}
@@ -56,14 +64,6 @@ export function BookingSidebar() {
           active={isActive("/booking/history")}
           sidebarOpen={sidebarOpen}
           onClick={() => router.push("/booking/history")}
-        />
-
-        <NavItem
-          icon={<MessageSquare className="w-5 h-5" />}
-          label="Feedback"
-          active={isActive("/booking/feedback")}
-          sidebarOpen={sidebarOpen}
-          onClick={() => router.push("/booking/feedback")}
         />
 
         <NavItem
